@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    #API:
+    # API:
     OPEN_AI_API_KEY = os.getenv("OPENAI_API_KEY")
-    MODEL           = os.getenv("MODEL", "gpt-4o-mini")
+    MODEL = os.getenv("MODEL", "gpt-4o-mini")
 
-    #Limits:
+    # Limits:
     MAX_TOKENS = 500
     MAX_HISTORY = 20
     MAX_RETRIES = 3
@@ -22,6 +22,5 @@ class Config:
 
     def validate(self):
         if not self.OPEN_AI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is not set in the environment variables.") 
+            raise ValueError("OPENAI_API_KEY is not set in the environment variables.")
         return True
-    

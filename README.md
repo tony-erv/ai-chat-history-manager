@@ -1,15 +1,14 @@
-# Custom AI CLI Chatbot 🤖
+# Chatbot with OpenAI API 🤖
 
-A flexible Python-based command-line interface for interacting with OpenAI models. This project features a modular design, allowing you to easily swap "AI personas" and manage conversation memory.
+This is a Python chatbot that interacts with OpenAI's GPT model. It supports:
+- Message history with a limit.
+- Validation of user input.
+- Logging for debugging and monitoring.
 
-### 🚀 Key Features
-- **Configurable Persona:** Easily change the `SYSTEM_PROMPT` to switch between different AI roles (Hacker, Assistant, Tutor, etc.).
-- **Persistent History:** Automatically saves and loads chat logs using `chat_history.json`.
-- **Session Management:**
-  - `history`: Display all messages from the current and past sessions.
-  - `clear`: Reset the conversation and delete the local history file.
-  - `exit/quit`: Gracefully exit and ensure the current session is saved.
-- **Environment Security:** Uses `.env` to keep your API keys safe and out of version control.
+## Features
+- **Configurable**: All settings are in `config.py`.
+- **History Management**: Save, load, and clear chat history.
+- **Error Handling**: Handles API errors gracefully.
 
 ### 🛠 Tech Stack
 - **Language:** Python 3.x
@@ -31,4 +30,4 @@ A flexible Python-based command-line interface for interacting with OpenAI model
 3. **Install & Run:**
     ```bash
     pip install openai python-dotenv
-    python chat.py
+    python main.py
