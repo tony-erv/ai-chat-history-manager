@@ -1,7 +1,11 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+
+try:
+    from dotenv import load_dotenv()
+    load_dotenv()
+except ImportError:
+    pass
 
 class Config:
     # API:
