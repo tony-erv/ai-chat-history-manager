@@ -11,15 +11,15 @@ cfg.validate()
 
 client = OpenAI(api_key=cfg.OPEN_AI_API_KEY)
 
-def load_history():
+def load_history(history_file):
     try:
-        with open(cfg.HISTORY_FILE, "r") as f:
+        with open(history_file, "r") as f:
             return json.load(f)
     except FileNotFoundError:
         return []
 
-def save_history(history):
-    with open(cfg.HISTORY_FILE, "w") as f:
+def save_history(history, history_file):
+    with open(history_file, "w") as f:
         json.dump(history, f, indent=2, ensure_ascii=False)
 
 def show_history():
@@ -52,7 +52,8 @@ def safe_chat(messages, retries=cfg.MAX_RETRIES):
                 timeout=cfg.TIMEOUT
             )
             logger.info("Response received successfully. Tokens used: %d", response.usage.total_tokens)
-            return response.choices[0].message.content
+            reply = response.choices[0].message.content
+            return reply, response.usage.total_tokens  # Возвращаем ответ и количество токенов
 
         except RateLimitError:
             logger.warning("RateLimitError on attempt %d.", attempt + 1)
@@ -66,13 +67,31 @@ def safe_chat(messages, retries=cfg.MAX_RETRIES):
             logger.warning("Connection error. Retrying %d/%d...", attempt + 1, retries)
             time.sleep(5)
 
-    return "Sorry, I'm having trouble responding right now. Please try again later."
+    return "Sorry, I'm having trouble responding right now. Please try again later.", 0
 
 def chat(user_input, history):
     history.append({"role": "user", "content": user_input})
     filtered_history = history[-cfg.MAX_HISTORY:]
 
     messages = [{"role": "system", "content": cfg.SYSTEM_PROMPT}] + filtered_history
-    ai_reply = safe_chat(messages)
+    ai_reply, tokens = safe_chat(messages)
     history.append({"role": "assistant", "content": ai_reply})
     return ai_reply, history
+
+def get_reply(user_input, history, cfg):
+    """
+    Принимает ввод пользователя, историю и config.
+    Возвращает (ответ AI, обновлённую историю, токены).
+    Это единственная функция которую вызывает app.py.
+    """
+    messages = (
+        [{"role": "system", "content": cfg.SYSTEM_PROMPT}]
+        + history[-cfg.MAX_HISTORY:]
+        + [{"role": "user", "content": user_input}]
+    )
+    # Передаем cfg.MAX_RETRIES вместо cfg
+    reply, tokens = safe_chat(messages, cfg.MAX_RETRIES)
+
+    history.append({"role": "user", "content": user_input})
+    history.append({"role": "assistant", "content": reply})
+    return reply, history, tokens
