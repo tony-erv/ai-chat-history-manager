@@ -21,7 +21,7 @@ A flexible Python-based command-line interface for interacting with OpenAI model
 
 1. **Clone & Enter:**
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/ai-chat-history-manager.git](https://github.com/YOUR_USERNAME/ai-chat-history-manager.git)
+   git clone [https://github.com/tony-erv/ai-chat-history-manager.git](https://github.com/tony-erv/ai-chat-history-manager.git)
    cd ai-chat-history-manager
 
 2. **Setup Environment:**
@@ -32,6 +32,3 @@ A flexible Python-based command-line interface for interacting with OpenAI model
     ```bash
     pip install openai python-dotenv
     python chat.py
-
-⚙️ How to Customize
-To change the chatbot's personality, simply modify the SYSTEM_PROMPT variable at the top of chat.py:
