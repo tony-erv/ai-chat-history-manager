@@ -1,13 +1,35 @@
 import os
+import time
 import json
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, AuthenticationError, APIConnectionError
+from config import Config
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("chat.log"),
+        logging.StreamHandler()
+    ])
+
+logger = logging.getLogger(__name__)
+#logger.info("Starting chat application...")
+#logger.warning("History close to limit, consider clearing old messages.")
+#logger.error("API error: %s", "RateLimitError") 
+
+cfg = Config()
+cfg.validate()
+client = OpenAI(api_key=cfg.OPEN_AI_API_KEY)
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-HISTORY_FILE = "chat_history.json"
-SYSTEM_PROMPT = "You are cybesecurity hacker, and you answer use hacker words."
+HISTORY_FILE = Config.HISTORY_FILE
+SYSTEM_PROMPT = Config.SYSTEM_PROMPT
+MODEL = Config.MODEL
+MAX_TOKENS = Config.MAX_TOKENS
 
 def load_history():
     try:
@@ -39,22 +61,47 @@ def clear_history():
     else:
         print("No chat history to clear.")
 
+def validate_message(text):
+    return bool(text) and len(text) < 2000
+
+def safe_chat(messages, retries=3):
+    for attempt in range(retries):
+        try:
+            logger.info(f"Attempting to send message. Attempt {attempt + 1}/{retries}")
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                max_tokens=MAX_TOKENS,
+                timeout=Config.TIMEOUT
+            )
+            logger.info("Response received successfully. Tokens used: %d", response.usage.total_tokens)
+            return response.choices[0].message.content
+        
+        except RateLimitError:
+            logger.warning("RateLimitError on attempt %d.", attempt + 1)
+
+        except AuthenticationError:
+            print(f"Authentication failed. Check your API key.")
+            raise
+
+        except APIConnectionError:
+            print(f"Connection error. Retrying {attempt + 1}/{retries}...")
+            time.sleep(5)
+
+    return "Sorry, I'm having trouble responding right now. Please try again later."    
 
 def chat(user_input, history):
     history.append({"role": "user", "content": user_input})
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
+    filtered_history = list(filter(lambda msg: validate_message(msg["content"]), history))[-Config.MAX_HISTORY:]
+    messages=[
             {
                 "role":"system",
                 "content": SYSTEM_PROMPT
-                },
-        ] + history,
-        max_tokens=300
-    )
-
-    ai_reply = response.choices[0].message.content
+                } 
+        ] + filtered_history
+    
+    ai_reply = safe_chat(messages)
     history.append({"role": "assistant", "content": ai_reply})
     return ai_reply, history
 
