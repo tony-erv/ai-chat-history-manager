@@ -2,6 +2,9 @@ import os, json, math
 from dotenv import load_dotenv
 from openai import OpenAI
 from ddgs import DDGS
+import requests
+from datetime import datetime
+import pytz
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -31,13 +34,80 @@ def calculate(expression):
         return f"Error evaluating expression: {e}"
     
 def get_weather(city):
-    """Mock function to get weather info for a city."""
-    return f"The current weather in {city} is sunny with a temperature of 25°C."
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if not api_key:
+        return "Error: OpenWeatherMap API key is missing. Please set it in the .env file."
+    base_url = "http://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "q": city, 
+        "appid": api_key, 
+        "units": "metric",
+        "lang": "en"
+    }
+    try:
+        response = requests.get(base_url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        weather = data["weather"][0]["description"].capitalize()
+        temp = data["main"]["temp"]
+        return f"Current weather in {city}: {weather}, with a temperature of {temp}°C"
+    except requests.exceptions.RequestException as e:
+        return f"Network error fetching weather data: {e}"
+    except Exception as e:
+        return f"Error fetching weather for {city}: {e}"
+    
+def get_time(city):
+    """Get the current time in a specified city."""
+    username = os.getenv("GEONAMES_USERNAME")
+    if not username:
+        return "Error: GeoNames username is missing. Please set it in the .env file."
+    
+    search_url = "http://api.geonames.org/searchJSON"
+    search_params = {
+        "q": city,
+        "maxRows": 1,
+        "username": username
+    }
+
+    try:
+        search_res = requests.get(search_url, params=search_params, timeout=5)
+        search_res.raise_for_status()
+        search_data = search_res.json()
+
+        if not search_data["geonames"]:
+            return f"City '{city}' not found."
+        
+        lat = search_data["geonames"][0]["lat"]
+        lng = search_data["geonames"][0]["lng"]     
+
+        tz_url = "http://api.geonames.org/timezoneJSON"
+        tz_params = {
+            "lat": lat,
+            "lng": lng,
+            "username": username
+        }
+        tz_res = requests.get(tz_url, params=tz_params, timeout=5)
+        tz_res.raise_for_status()
+        tz_data = tz_res.json()
+        tz_id = tz_data.get("timezoneId")
+        if not tz_id:
+            return f"Could not determine timezone for {city}."  
+        
+        tz = pytz.timezone(tz_id)
+        current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        return f"Current time in {city} is {current_time}."
+    
+    except requests.exceptions.RequestException as e:
+        return f"Network error fetching time data: {e}"
+    except Exception as e:
+        return f"Error fetching time for {city}: {e}"
+    
 
 TOOL_MAP = {
     "search_web": search_web,
     "calculate": calculate,
     "get_weather": get_weather,
+    "get_time": get_time,
 }
 
 TOOLS = [
@@ -92,6 +162,23 @@ TOOLS = [
             }
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_time",
+            "description": "Get the current time in the specified city.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {
+                        "type": "string",
+                        "description": "The city to get the current time for, e.g. 'New York' or 'Tokyo'."
+                    }
+                },
+                "required": ["city"]
+            }
+        }
+    }
 ]  
 
 def run_agent(task, system_prompt="You are a helpful assistant that can perform various tasks using tools."):
@@ -145,7 +232,7 @@ def run_agent(task, system_prompt="You are a helpful assistant that can perform 
 
 if __name__ == "__main__":
     tasks = [
-        "погода в симферополе, Каире и Дублине сейчас"
+        "Время в Керчи сейчас",
     ]
 
     for task in tasks:
