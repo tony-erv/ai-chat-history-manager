@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 cfg = Config()
 cfg.validate()
 
-client = OpenAI(api_key=cfg.OPEN_AI_API_KEY)
+client = OpenAI(api_key=cfg.OPENAI_API_KEY)
 
 def load_history(history_file):
     try:
@@ -94,11 +94,8 @@ def get_reply(user_input, history, cfg):
 
 def get_rag_reply(user_input, history, cfg, vectorstore):
     context = search(vectorstore, user_input, k=4)
-    rag_system_prompt = f"""{cfg.SYSTEM_PROMPT}
+    rag_system_prompt = f"""{cfg.DOCUMENT_PROMPT}
 
-Answer ONLY based on the following context from the document. 
-If the answer is not in the context, say you don't know.
-Don't make up answers. Always use the context.
 Context: {context}"""
     
     messages = (

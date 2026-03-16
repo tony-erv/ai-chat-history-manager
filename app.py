@@ -15,6 +15,11 @@ for key, val in {"messages": [], "total_tokens": 0, "vectorstore": None}.items()
 
 # ── Sidebar ──────────────────────────────────────────────
 with st.sidebar:
+
+    st.header("Settings")
+    cfg.SYSTEM_PROMPT = st.text_area("System Prompt", value=cfg.SYSTEM_PROMPT)
+    cfg.DOCUMENT_PROMPT = st.text_area("Document Prompt", value=cfg.DOCUMENT_PROMPT)
+    
     st.header("Documents")
 
     uploaded = st.file_uploader("Upload a PDF", type="pdf")
@@ -37,7 +42,7 @@ with st.sidebar:
     rag_mode = st.toggle(
         "Document Mode",
         value=st.session_state.vectorstore is not None,
-        disabled=st.session_state.vectorstore is None
+        disabled=False  
     )
     show_context = st.checkbox("Show Sources", value=False)
     st.divider()
