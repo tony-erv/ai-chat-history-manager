@@ -20,7 +20,7 @@ if "total_tokens" not in st.session_state:
     st.session_state.total_tokens = 0
 
 with st.sidebar:
-    st.header("Настройки")
+    st.header("Settings")
     cfg.SYSTEM_PROMPT = st.text_area(
         "System prompt", 
         value=cfg.SYSTEM_PROMPT, 

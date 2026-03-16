@@ -4,6 +4,7 @@ This is a Python chatbot that interacts with OpenAI's GPT model. It supports:
 - Message history with a limit.
 - Validation of user input.
 - Logging for debugging and monitoring.
+- **NEW**: Integration with a vector database for searching through PDF documents.
 
 ---
 
@@ -12,6 +13,7 @@ This is a Python chatbot that interacts with OpenAI's GPT model. It supports:
 - **History Management**: Save, load, and clear chat history.
 - **Error Handling**: Handles API errors gracefully.
 - **Input Validation**: Ensures user messages are non-empty and under 2000 characters.
+- **PDF Search**: Upload a PDF, create a vector database, and search for relevant chunks of text.
 
 ---
 
@@ -19,6 +21,7 @@ This is a Python chatbot that interacts with OpenAI's GPT model. It supports:
 - **Language:** Python 3.x
 - **API:** OpenAI (GPT-4o-mini)
 - **Data:** JSON for local persistence
+- **Vector Database:** ChromaDB
 - **Environment:** `python-dotenv`
 
 ---
@@ -48,6 +51,10 @@ This is a Python chatbot that interacts with OpenAI's GPT model. It supports:
    python main.py
    ```
 
+5. **Work with PDFs (Optional):**
+   - Place your PDF file in the project directory.
+   - Use the `rag.py` module to load the PDF, create a vector database, and perform searches.
+
 ---
 
 ## Usage
@@ -75,6 +82,39 @@ Chat ended. History saved.
 
 ---
 
+## PDF Search Workflow
+
+### 1. Load a PDF:
+Use the `load_pdf` function from `rag.py` to load and split a PDF into chunks:
+```python
+from rag import load_pdf
+chunks = load_pdf("example.pdf")
+```
+
+### 2. Build a Vector Database:
+Create a vector database from the chunks:
+```python
+from rag import build_vectorstore
+vectorstore = build_vectorstore(chunks, api_key="your_openai_api_key")
+```
+
+### 3. Search the Database:
+Perform a search query to find relevant chunks:
+```python
+from rag import search
+result = search(vectorstore, "What is machine learning?")
+print(result)
+```
+
+### 4. Check if a Vector Database Exists:
+```python
+from rag import vectorstore_exists
+if vectorstore_exists():
+    print("Vector database already exists.")
+```
+
+---
+
 ## Configuration
 
 All settings are managed in `config.py`:
@@ -88,6 +128,7 @@ All settings are managed in `config.py`:
   - `TIMEOUT`: Timeout for API requests.
 - **Files**:
   - `HISTORY_FILE`: File to save chat history.
+  - `CHROMA_DIR`: Directory to store the vector database.
 - **Prompts**:
   - `SYSTEM_PROMPT`: Initial system message for the chatbot.
 
