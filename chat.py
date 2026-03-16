@@ -106,7 +106,7 @@ Context: {context}"""
         + history[-cfg.MAX_HISTORY:]
         + [{"role": "user", "content": user_input}]
     )
-    reply, tokens = safe_chat(messages, cfg)
+    reply, tokens = safe_chat(messages, cfg.MAX_RETRIES)
 
     history.append({"role": "user", "content": user_input})
     history.append({"role": "assistant", "content": reply})
