@@ -209,3 +209,6 @@ __marimo__/
 .env
 chat_history.json
 chat.log
+__pycache__
+chroma_db/
+
