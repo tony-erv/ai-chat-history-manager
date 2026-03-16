@@ -4,6 +4,7 @@ import time
 import logging
 from openai import OpenAI, RateLimitError, AuthenticationError, APIConnectionError
 from config import Config
+from rag import search
 
 logger = logging.getLogger(__name__)
 cfg = Config()
@@ -79,11 +80,6 @@ def chat(user_input, history):
     return ai_reply, history
 
 def get_reply(user_input, history, cfg):
-    """
-    Принимает ввод пользователя, историю и config.
-    Возвращает (ответ AI, обновлённую историю, токены).
-    Это единственная функция которую вызывает app.py.
-    """
     messages = (
         [{"role": "system", "content": cfg.SYSTEM_PROMPT}]
         + history[-cfg.MAX_HISTORY:]
@@ -95,3 +91,23 @@ def get_reply(user_input, history, cfg):
     history.append({"role": "user", "content": user_input})
     history.append({"role": "assistant", "content": reply})
     return reply, history, tokens
+
+def get_rag_reply(user_input, history, cfg, vectorstore):
+    context = search(vectorstore, user_input, k=4)
+    rag_system_prompt = f"""{cfg.SYSTEM_PROMPT}
+
+Answer ONLY based on the following context from the document. 
+If the answer is not in the context, say you don't know.
+Don't make up answers. Always use the context.
+Context: {context}"""
+    
+    messages = (
+        [{"role": "system", "content": rag_system_prompt}]
+        + history[-cfg.MAX_HISTORY:]
+        + [{"role": "user", "content": user_input}]
+    )
+    reply, tokens = safe_chat(messages, cfg)
+
+    history.append({"role": "user", "content": user_input})
+    history.append({"role": "assistant", "content": reply})
+    return reply, history, tokens, context
