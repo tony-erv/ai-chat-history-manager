@@ -6,6 +6,8 @@ from openai import OpenAI, RateLimitError, AuthenticationError, APIConnectionErr
 from config import Config
 from rag import search
 
+sessions_db = {}
+
 logger = logging.getLogger(__name__)
 cfg = Config()
 cfg.validate()

@@ -8,7 +8,7 @@ import pytz
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-max_steps = 5
+# max_steps = 5
 
 def search_web(query):
     """Search the web using DuckDuckGo and return a summary of results."""
@@ -181,7 +181,7 @@ TOOLS = [
     }
 ]  
 
-def run_agent(task, system_prompt="You are a helpful assistant that can perform various tasks using tools."):
+def run_agent(task, max_steps = 5, system_prompt="You are a helpful assistant that can perform various tasks using tools."):
     """Run an agent to complete a task using the defined tools."""
     messages = [
         {"role": "system", "content": system_prompt},
@@ -232,7 +232,7 @@ def run_agent(task, system_prompt="You are a helpful assistant that can perform 
 
 if __name__ == "__main__":
     tasks = [
-        "Время в Керчи сейчас",
+        "Current time and weather in Tokyo",
     ]
 
     for task in tasks:
